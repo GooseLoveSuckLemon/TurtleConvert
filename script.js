@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileSize = document.getElementById('fileSize');
     const currentFormat = document.getElementById('currentFormat');
     const targetFormatSelect = document.getElementById('targetFormat');
+    const outputFileName = document.getElementById('outputFileName');
+    const outputFileExt = document.getElementById('outputFileExt');
     const convertBtn = document.getElementById('convertBtn');
     const resultDiv = document.getElementById('result');
     const resultPreview = document.getElementById('resultPreview');
@@ -17,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentFile = null;
     let currentFileType = ''; // 'image', 'video', 'audio'
+    let currentExt = '';
     let convertedBlob = null;
     let convertedFileName = '';
 
@@ -60,6 +63,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return filename.split('.').pop().toLowerCase();
     }
 
+    function getFileNameWithoutExt(filename) {
+        return filename.replace(/\.[^.]+$/, '');
+    }
+
     function getFileCategory(ext) {
         for (const [cat, data] of Object.entries(formatMap)) {
             if (data.extensions.includes(ext)) return cat;
@@ -86,19 +93,31 @@ document.addEventListener('DOMContentLoaded', () => {
             const chips = cat.querySelectorAll('.chip');
             
             if (catType === category) {
-                // Show all chips in this category as active
                 chips.forEach(chip => {
                     chip.classList.remove('inactive');
                     chip.classList.add('active');
                 });
             } else {
-                // Hide other categories
                 chips.forEach(chip => {
                     chip.classList.remove('active');
                     chip.classList.add('inactive');
                 });
             }
         });
+    }
+
+    // === Update filename extension when target format changes ===
+    function updateFileExtension() {
+        const targetExt = targetFormatSelect.value;
+        if (targetExt) {
+            outputFileExt.textContent = '.' + targetExt;
+        }
+    }
+
+    // === Set default filename from original ===
+    function setDefaultFileName(originalName) {
+        const baseName = getFileNameWithoutExt(originalName);
+        outputFileName.value = baseName;
     }
 
     // === UI: show controls ===
@@ -112,6 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         currentFile = file;
         currentFileType = cat;
+        currentExt = ext;
         controls.style.display = 'block';
         resultDiv.style.display = 'none';
 
@@ -128,6 +148,10 @@ document.addEventListener('DOMContentLoaded', () => {
             opt.textContent = f.toUpperCase();
             targetFormatSelect.appendChild(opt);
         });
+
+        // Set default filename
+        setDefaultFileName(file.name);
+        updateFileExtension();
 
         // Update formats UI
         updateFormatsUI(cat);
@@ -264,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // === Show result ===
-    function showResult(blob, originalName, targetExt) {
+    function showResult(blob, targetExt) {
         const url = URL.createObjectURL(blob);
         const cat = currentFileType;
 
@@ -292,7 +316,17 @@ document.addEventListener('DOMContentLoaded', () => {
             resultPreview.appendChild(audio);
         }
 
-        const baseName = originalName.replace(/\.[^.]+$/, '');
+        // Build final filename from user input
+        let baseName = outputFileName.value.trim();
+        if (!baseName) {
+            baseName = getFileNameWithoutExt(currentFile.name);
+        }
+        // Sanitize filename (remove forbidden chars)
+        baseName = baseName.replace(/[^a-zA-Z0-9а-яА-Я\-_ ]/g, '');
+        if (!baseName) {
+            baseName = 'converted';
+        }
+        
         convertedFileName = `${baseName}.${targetExt}`;
         downloadBtn.href = url;
         downloadBtn.download = convertedFileName;
@@ -334,6 +368,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Update extension when target format changes
+    targetFormatSelect.addEventListener('change', updateFileExtension);
+
     convertBtn.addEventListener('click', async () => {
         if (!currentFile) return;
         const targetExt = targetFormatSelect.value;
@@ -344,7 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const blob = await convertFile(currentFile, targetExt);
-            showResult(blob, currentFile.name, targetExt);
+            showResult(blob, targetExt);
         } catch (err) {
             alert('Ошибка конвертации: ' + err.message);
         } finally {

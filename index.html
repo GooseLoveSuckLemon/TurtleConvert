@@ -80,6 +80,16 @@
                             <select id="targetFormat" class="select-clean"></select>
                         </div>
                     </div>
+                    <!-- NEW: File name input -->
+                    <div class="format-row" style="margin-top: 6px;">
+                        <div class="format-group" style="width: 100%;">
+                            <label>📝 Имя выходного файла</label>
+                            <div class="filename-input-wrapper">
+                                <input type="text" id="outputFileName" class="filename-input" placeholder="новое_имя" />
+                                <span class="filename-ext" id="outputFileExt">.png</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <button class="btn btn-convert" id="convertBtn">🔄 Конвертировать</button>
