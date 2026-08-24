@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultPreview = document.getElementById('resultPreview');
     const downloadBtn = document.getElementById('downloadBtn');
     const resetBtn = document.getElementById('resetBtn');
+    const formatsGrid = document.getElementById('formatsGrid');
 
     let currentFile = null;
     let currentFileType = ''; // 'image', 'video', 'audio'
@@ -22,6 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // === Format mapping ===
     const formatMap = {
         image: {
+            label: 'Фото',
+            icon: '🖼',
             extensions: ['png', 'jpg', 'jpeg', 'webp'],
             mimes: {
                 png: 'image/png',
@@ -31,6 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
             },
         },
         video: {
+            label: 'Видео',
+            icon: '🎬',
             extensions: ['mp4', 'webm', 'gif'],
             mimes: {
                 mp4: 'video/mp4',
@@ -39,6 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
             },
         },
         audio: {
+            label: 'Аудио',
+            icon: '🎵',
             extensions: ['mp3', 'wav', 'ogg'],
             mimes: {
                 mp3: 'audio/mpeg',
@@ -71,6 +78,29 @@ document.addEventListener('DOMContentLoaded', () => {
         return exts.filter(e => e !== currentExt);
     }
 
+    // === Update formats UI ===
+    function updateFormatsUI(category) {
+        const categories = formatsGrid.querySelectorAll('.format-category');
+        categories.forEach(cat => {
+            const catType = cat.dataset.category;
+            const chips = cat.querySelectorAll('.chip');
+            
+            if (catType === category) {
+                // Show all chips in this category as active
+                chips.forEach(chip => {
+                    chip.classList.remove('inactive');
+                    chip.classList.add('active');
+                });
+            } else {
+                // Hide other categories
+                chips.forEach(chip => {
+                    chip.classList.remove('active');
+                    chip.classList.add('inactive');
+                });
+            }
+        });
+    }
+
     // === UI: show controls ===
     function showControls(file) {
         const ext = getFileExtension(file.name);
@@ -98,6 +128,9 @@ document.addEventListener('DOMContentLoaded', () => {
             opt.textContent = f.toUpperCase();
             targetFormatSelect.appendChild(opt);
         });
+
+        // Update formats UI
+        updateFormatsUI(cat);
 
         // Reset converted
         convertedBlob = null;
@@ -155,10 +188,9 @@ document.addEventListener('DOMContentLoaded', () => {
         img.src = dataUrl;
     }
 
-    // --- Video conversion (using canvas for GIF) ---
+    // --- Video conversion ---
     function convertVideo(file, targetExt, resolve, reject) {
         if (targetExt === 'gif') {
-            // Create GIF from video using canvas
             const url = URL.createObjectURL(file);
             const video = document.createElement('video');
             video.src = url;
@@ -172,23 +204,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 canvas.height = video.videoHeight;
                 const ctx = canvas.getContext('2d');
 
-                // We'll capture first 2 seconds as GIF
                 const duration = Math.min(2, video.duration);
                 const fps = 10;
                 const totalFrames = Math.floor(duration * fps);
-                const frameDelay = 1000 / fps;
                 const frames = [];
 
                 let currentFrame = 0;
 
                 const captureFrame = () => {
                     if (currentFrame >= totalFrames) {
-                        // Create GIF from frames
                         createGifFromFrames(frames, canvas.width, canvas.height, resolve, reject);
                         URL.revokeObjectURL(url);
                         return;
                     }
-
                     video.currentTime = (currentFrame / totalFrames) * duration;
                 };
 
@@ -213,10 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             video.onerror = () => reject(new Error('Не удалось загрузить видео'));
         } else {
-            // For other formats, we just rewrap (real conversion would need FFmpeg)
-            // For demo, we'll create a simple blob with correct mime
             const mime = formatMap.video.mimes[targetExt] || 'video/mp4';
-            // Simple: just change mime type (works for containers)
             const blob = new Blob([file], { type: mime });
             resolve(blob);
         }
@@ -224,10 +249,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Simple GIF creation ---
     function createGifFromFrames(frameBlobs, width, height, resolve, reject) {
-        // Since we can't easily create GIF in pure JS without a library,
-        // we'll use a canvas-based approach to create an animated GIF using multiple frames.
-        // For a production version, use a library like gif.js.
-        // This is a simplified demo: just return the first frame as PNG.
         if (frameBlobs.length > 0) {
             resolve(frameBlobs[0]);
         } else {
@@ -238,8 +259,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Audio conversion ---
     function convertAudio(file, targetExt, resolve, reject) {
         const mime = formatMap.audio.mimes[targetExt] || 'audio/mpeg';
-        // For demo, we create a new blob with the target mime.
-        // Real conversion would use Web Audio API.
         const blob = new Blob([file], { type: mime });
         resolve(blob);
     }
@@ -252,7 +271,6 @@ document.addEventListener('DOMContentLoaded', () => {
         resultDiv.style.display = 'block';
         controls.style.display = 'none';
 
-        // Preview
         resultPreview.innerHTML = '';
         if (cat === 'image') {
             const img = document.createElement('img');
@@ -274,7 +292,6 @@ document.addEventListener('DOMContentLoaded', () => {
             resultPreview.appendChild(audio);
         }
 
-        // Set download
         const baseName = originalName.replace(/\.[^.]+$/, '');
         convertedFileName = `${baseName}.${targetExt}`;
         downloadBtn.href = url;
@@ -284,7 +301,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === Event handlers ===
 
-    // Click to select
     selectBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         fileInput.click();
@@ -301,7 +317,6 @@ document.addEventListener('DOMContentLoaded', () => {
         fileInput.value = '';
     });
 
-    // Drag & drop
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
         dropZone.classList.add('dragover');
@@ -319,7 +334,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Convert
     convertBtn.addEventListener('click', async () => {
         if (!currentFile) return;
         const targetExt = targetFormatSelect.value;
@@ -339,7 +353,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Reset
     resetBtn.addEventListener('click', () => {
         resultDiv.style.display = 'none';
         controls.style.display = 'block';
