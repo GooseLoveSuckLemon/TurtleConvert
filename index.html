@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FileForge — Конвертер файлов</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet" />
+</head>
+<body>
+    <div class="app">
+        <header>
+            <h1>⚡ FileForge</h1>
+            <p class="subtitle">Конвертируй фото, видео и аудио за секунды</p>
+        </header>
+
+        <main class="container">
+            <!-- Drop zone -->
+            <div class="drop-zone" id="dropZone">
+                <div class="drop-content">
+                    <span class="icon-big">📂</span>
+                    <h3>Перетащите файл сюда</h3>
+                    <p>или кликните для выбора</p>
+                    <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.webp,.mp4,.webm,.gif,.mp3,.wav,.ogg" hidden />
+                    <button class="btn btn-primary" id="selectBtn">Выбрать файл</button>
+                </div>
+            </div>
+
+            <!-- Info & controls -->
+            <div class="controls" id="controls" style="display: none">
+                <div class="file-info">
+                    <div class="file-meta">
+                        <span class="file-name" id="fileName">file.png</span>
+                        <span class="file-size" id="fileSize">0 KB</span>
+                    </div>
+                    <div class="format-row">
+                        <div class="format-group">
+                            <label>Текущий формат</label>
+                            <span class="badge" id="currentFormat">PNG</span>
+                        </div>
+                        <div class="format-group">
+                            <label>Конвертировать в</label>
+                            <select id="targetFormat" class="select-clean"></select>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-convert" id="convertBtn">🔄 Конвертировать</button>
+            </div>
+
+            <!-- Result -->
+            <div class="result" id="result" style="display: none">
+                <div class="result-card">
+                    <div class="result-preview" id="resultPreview"></div>
+                    <div class="result-actions">
+                        <a class="btn btn-download" id="downloadBtn" download>⬇ Скачать</a>
+                        <button class="btn btn-secondary" id="resetBtn">🔄 Конвертировать другой файл</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ad placeholder -->
+            <div class="ad-placeholder">
+                <div class="ad-badge">Реклама</div>
+                <div class="ad-content">Здесь будет ваш рекламный блок</div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Файлы обрабатываются локально в вашем браузере. Ничего не загружается на сервер.</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
